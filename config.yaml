@@ -1,0 +1,281 @@
+# ClawSync Configuration
+# Encrypted bidirectional synchronization settings for OpenClaw ecosystem
+
+# Device identification and security
+device:
+  id: "laptop"                    # Unique device identifier
+  name: "Primary Laptop"           # Human-readable device name
+  passphrase: "secure_encryption_passphrase"  # Encryption passphrase (change this!)
+  auto_start: true                # Start sync daemon on boot
+
+# Sync folders configuration
+folders:
+  # High priority - always sync
+  - path: "~/.openclaw/memory"
+    encrypted: true
+    priority: "high"
+    conflict_resolution: "auto-learn"
+    max_size_mb: 1000
+    file_types: ["*.sqlite3", "*.json", "*.md"]
+    
+  - path: "~/.openclaw/.learnings"
+    encrypted: true
+    priority: "high"
+    conflict_resolution: "auto-learn"
+    max_size_mb: 500
+    file_types: ["*.json", "*.md", "*.yml"]
+    
+  - path: "~/.openclaw/SOUL.md"
+    encrypted: true
+    priority: "high"
+    conflict_resolution: "manual"
+    max_size_mb: 1
+    file_types: ["*.md"]
+    
+  - path: "~/.openclaw/AGENTS.md"
+    encrypted: true
+    priority: "high"
+    conflict_resolution: "manual"
+    max_size_mb: 1
+    file_types: ["*.md"]
+
+  # Medium priority - selective sync
+  - path: "~/.openclaw/skills"
+    encrypted: true
+    priority: "medium"
+    conflict_resolution: "manual"
+    max_size_mb: 2000
+    exclude_patterns: ["*/containers/*", "*/node_modules/*", "*/.git/*"]
+    file_types: ["*.py", "*.yml", "*.yaml", "*.md", "*.txt"]
+    
+  - path: "~/.openclaw/workspace"
+    encrypted: false
+    priority: "medium"
+    conflict_resolution: "manual"
+    max_size_mb: 5000
+    exclude_patterns: ["*/temp/*", "*/cache/*", "*/.tmp/*"]
+    
+  - path: "~/.openclaw/config.yaml"
+    encrypted: true
+    priority: "medium"
+    conflict_resolution: "manual"
+    max_size_mb: 1
+    file_types: ["*.yaml", "*.yml"]
+
+  # Low priority - optional sync
+  - path: "~/.openclaw/logs"
+    encrypted: false
+    priority: "low"
+    conflict_resolution: "skip"
+    max_size_mb: 100
+    exclude_patterns: ["*/old/*", "*/archive/*"]
+    file_types: ["*.log", "*.json"]
+    
+  - path: "~/.openclaw/downloads"
+    encrypted: false
+    priority: "low"
+    conflict_resolution: "skip"
+    max_size_mb: 10000
+    exclude_patterns: ["*/temp/*", "*/cache/*"]
+
+# Remote devices configuration
+devices:
+  - id: "desktop"
+    name: "Office Desktop"
+    address: "192.168.1.100:22000"
+    trusted: true
+    auto_accept: false
+    folders: ["memory", "learnings", "skills"]
+    
+  - id: "phone"
+    name: "Mobile Device"
+    address: "dynamic"
+    trusted: true
+    auto_accept: false
+    folders: ["memory", "learnings"]
+    
+  - id: "tablet"
+    name: "Tablet"
+    address: "dynamic"
+    trusted: false
+    auto_accept: false
+    folders: ["memory"]
+
+# Synchronization behavior
+sync:
+  mode: "real-time"               # real-time, scheduled, manual
+  interval: 300                    # seconds for scheduled mode
+  batch_size: 100                  # files per batch
+  max_concurrent_transfers: 5       # simultaneous transfers
+  retry_attempts: 3                # retry failed transfers
+  timeout: 60                      # seconds per transfer
+  bandwidth_limit: 0                # KB/s (0 = unlimited)
+  lan_discovery: true               # discover devices on local network
+  nat_traversal: true               # use relay servers for NAT
+
+# Conflict resolution settings
+conflicts:
+  auto_resolve: true               # automatically resolve conflicts
+  learning_enabled: true          # learn from user decisions
+  clawselfimprove_integration: true # use ClawSelfImprove for resolution
+  default_action: "merge-latest"   # default resolution strategy
+  notification_required: false     # notify user of conflicts
+  backup_before_resolve: true      # create backup before resolution
+  conflict_log: true             # log all conflicts for analysis
+
+# Learning and AI integration
+learning:
+  clawselfimprove:
+    enabled: true
+    endpoint: "auto"              # auto-detect or specify URL
+    timeout: 30                  # seconds for AI response
+    confidence_threshold: 0.8      # minimum confidence for auto-resolution
+    
+  patterns:
+    conflict_resolution: true       # learn conflict patterns
+    user_preferences: true        # learn user sync habits
+    device_behavior: true         # learn device-specific patterns
+    time_patterns: true           # learn time-based sync patterns
+    
+  feedback:
+    collect_usage_data: true      # collect anonymized usage data
+    improve_suggestions: true     # provide improvement suggestions
+    weekly_reports: true         # send weekly learning reports
+
+# Security settings
+security:
+  encryption:
+    algorithm: "AES-256-GCM"     # encryption algorithm
+    key_derivation: "scrypt"      # key derivation function
+    salt_length: 32               # salt length in bytes
+    iterations: 32768             # key derivation iterations
+    
+  network:
+    tls_version: "1.3"           # minimum TLS version
+    certificate_validation: true    # validate certificates
+    device_approval: "manual"     # manual, automatic, none
+    rate_limit: 100              # MB per minute
+    max_connections: 10           # max concurrent connections
+    
+  access_control:
+    require_authentication: true   # require device authentication
+    session_timeout: 3600        # session timeout in seconds
+    max_failed_attempts: 5       # max failed login attempts
+    lockout_duration: 300        # lockout duration in seconds
+
+# Notification settings
+notifications:
+  enabled: true
+  
+  telegram:
+    enabled: false
+    bot_token: "YOUR_BOT_TOKEN"
+    chat_id: "YOUR_CHAT_ID"
+    events: ["sync_complete", "conflict_detected", "device_connected"]
+    
+  discord:
+    enabled: false
+    webhook_url: "YOUR_WEBHOOK_URL"
+    events: ["sync_complete", "conflict_detected"]
+    
+  email:
+    enabled: false
+    smtp_server: "smtp.gmail.com"
+    smtp_port: 587
+    username: "your_email@gmail.com"
+    password: "your_app_password"
+    recipients: ["admin@example.com"]
+    events: ["sync_complete", "error"]
+    
+  desktop:
+    enabled: true
+    events: ["sync_complete", "conflict_detected", "error"]
+    timeout: 5                  # notification display time in seconds
+
+# Logging and monitoring
+logging:
+  level: "INFO"                   # DEBUG, INFO, WARNING, ERROR
+  format: "json"                  # json, text
+  file_path: "logs/claw_sync.log"
+  max_file_size_mb: 10            # rotate log files at this size
+  backup_count: 5                 # number of backup log files
+  console_output: true
+  
+  metrics:
+    enabled: true
+    collection_interval: 60        # seconds
+    retention_days: 30
+    export_format: "prometheus"    # prometheus, json
+    
+  audit:
+    enabled: true
+    log_file_access: true
+    log_conflicts: true
+    log_device_connections: true
+    log_security_events: true
+
+# Performance optimization
+performance:
+  file_watching:
+    enabled: true
+    debounce_ms: 500              # debounce file change events
+    batch_events: true             # batch multiple events
+    
+  memory:
+    max_cache_size_mb: 100        # file cache size
+    gc_interval: 3600            # garbage collection interval
+    
+  network:
+    compression: true              # compress transfers
+    delta_sync: true              # sync only changes
+    parallel_downloads: true       # parallel file downloads
+    
+  disk:
+    temp_directory: "temp"
+    cleanup_temp: true
+    cleanup_interval: 3600        # seconds
+
+# Integration with other OpenClaw skills
+integrations:
+  clawmemory:
+    enabled: true
+    vector_db_sync: true
+    integrity_check: true
+    backup_before_sync: true
+    
+  clawselfimprove:
+    enabled: true
+    conflict_learning: true
+    pattern_analysis: true
+    auto_improvement: true
+    
+  clawbackup:
+    enabled: true
+    sync_archives: true
+    verify_checksums: true
+    auto_archive: true
+    
+  clawflow:
+    enabled: true
+    scheduled_tasks: true
+    health_checks: true
+    auto_updates: true
+
+# Advanced settings (experimental)
+advanced:
+  experimental_features:
+    vector_sync: false            # experimental vector database sync
+    ai_conflict_resolution: false # AI-powered conflict resolution
+    predictive_sync: false        # predict and pre-sync files
+    distributed_learning: false   # share learning patterns across devices
+    
+  debugging:
+    verbose_logging: false
+    debug_conflicts: false
+    simulate_conflicts: false
+    performance_profiling: false
+    
+  compatibility:
+    legacy_device_support: true   # support older device versions
+    cross_platform_sync: true     # sync across different OS
+    backward_compatibility: true   # maintain compatibility with older configs

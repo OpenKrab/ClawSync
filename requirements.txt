@@ -1,0 +1,91 @@
+# ClawSync Requirements
+# Python dependencies for encrypted bidirectional synchronization
+
+# Core sync functionality
+syncthing>=1.27.0  # P2P file synchronization
+watchdog>=3.0.0  # File system monitoring
+cryptography>=41.0.0  # Encryption utilities
+pyyaml>=6.0.0  # Configuration management
+
+# Network and communication
+requests>=2.31.0  # HTTP requests for notifications
+websockets>=12.0  # Real-time communication
+aiohttp>=3.8.0  # Async HTTP client
+
+# File system and encryption
+fsspec>=2023.10.0  # File system specifications
+pathlib2>=2.3.7  # Path utilities (Python <3.4)
+click>=8.1.0  # Command line interface
+rich>=13.0.0  # Beautiful console output
+
+# Integration with OpenClaw skills
+# Optional: Install separately if needed
+# claw-memory>=1.0.0
+# claw-selfimprove>=1.0.0
+# claw-backup>=1.0.0
+
+# Database and storage
+sqlite3  # Built-in Python module
+aiofiles>=23.0.0  # Async file operations
+
+# Configuration and validation
+jsonschema>=4.19.0  # Configuration validation
+validators>=0.22.0  # Input validation
+python-dotenv>=1.0.0  # Environment variable management
+
+# Logging and monitoring
+structlog>=23.1.0  # Structured logging
+prometheus-client>=0.17.0  # Metrics collection (optional)
+
+# Development and testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-mock>=3.11.0
+black>=23.0.0
+isort>=5.12.0
+mypy>=1.5.0
+
+# Type hints (Python 3.8+)
+typing-extensions>=4.5.0
+
+# Platform-specific dependencies
+# Linux
+# pygobject>=3.44.0  # For system notifications
+# python3-gi  # System package
+
+# macOS
+# pyobjc-framework-Cocoa>=8.0  # macOS notifications
+# pyobjc-framework-Foundation>=8.0
+
+# Windows
+# pywin32>=306  # Windows API access
+# wmi>=1.5.1  # Windows Management Instrumentation
+
+# Optional: GUI components
+# tkinter  # Built-in Python module
+# PyQt5>=5.15.0  # Advanced GUI (optional)
+# kivy>=2.2.0  # Cross-platform GUI (optional)
+
+# Optional: Advanced encryption
+# libnacl>=1.8.0  # Advanced cryptography
+# pynacl>=1.5.0  # Python bindings for libsodium
+
+# Optional: Cloud integration (if user wants)
+# boto3>=1.28.0  # AWS S3
+# google-cloud-storage>=2.10.0  # Google Cloud
+# azure-storage-blob>=12.17.0  # Azure Blob Storage
+
+# Optional: Notification services
+# python-telegram-bot>=20.5  # Telegram notifications
+# discord-webhook>=1.0.0  # Discord notifications
+# plyer>=2.1.0  # Cross-platform notifications
+
+# Optional: Advanced features
+# schedule>=1.2.0  # Task scheduling
+# apscheduler>=3.10.0  # Advanced scheduling
+# redis>=4.6.0  # For distributed sync (optional)
+# celery>=5.3.0  # Distributed task queue (optional)
+
+# Security and verification
+# bandit>=1.7.0  # Security linter (development)
+# safety>=2.3.0  # Dependency vulnerability scanner

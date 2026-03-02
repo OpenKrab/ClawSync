@@ -1,0 +1,381 @@
+# ClawFlow Configuration for ClawSync
+# Encrypted bidirectional synchronization with intelligent conflict resolution
+
+metadata:
+  name: "claw-sync"
+  version: "1.0.0"
+  description: "Encrypted bidirectional synchronization for OpenClaw ecosystem - local-first P2P sync with intelligent conflict resolution"
+  author: "OpenKrab Community"
+  license: "MIT"
+  repository: "https://github.com/openkrab/claw-sync"
+  documentation: "https://github.com/openkrab/claw-sync#readme"
+
+# Installation steps
+installation:
+  steps:
+    - name: "Clone repository"
+      command: "git clone https://github.com/openkrab/claw-sync.git ~/.openclaw/skills/claw-sync"
+      cwd: "~/.openclaw/skills"
+
+    - name: "Create directories"
+      command: "mkdir -p ~/.openclaw/skills/claw-sync/{logs,temp,sync_encrypted,config}"
+      cwd: "~/.openclaw/skills/claw-sync"
+
+    - name: "Install Python dependencies"
+      command: "pip install -r requirements.txt"
+      cwd: "~/.openclaw/skills/claw-sync"
+
+    - name: "Install system dependencies"
+      command: |
+        # Ubuntu/Debian
+        if command -v apt-get; then
+          sudo apt-get update
+          sudo apt-get install -y syncthing gocryptfs fuse
+        # macOS
+        elif command -v brew; then
+          brew install syncthing gocryptfs
+        # Windows (check for Chocolatey)
+        elif command -v choco; then
+          choco install syncthing gocryptfs
+        else
+          echo "Please install Syncthing and gocryptfs manually"
+        fi
+      cwd: "~/.openclaw/skills/claw-sync"
+
+    - name: "Build sync container"
+      command: "docker build -t claw-sync containers/"
+      cwd: "~/.openclaw/skills/claw-sync"
+
+    - name: "Initialize device"
+      command: "python scripts/setup.py --device-id $(hostname) --name \"$(hostname) Device\""
+      cwd: "~/.openclaw/skills/claw-sync"
+
+    - name: "Test installation"
+      command: "python scripts/sync.py --test"
+      cwd: "~/.openclaw/skills/claw-sync"
+
+# Configuration templates
+configuration:
+  templates:
+    - name: "Single Device Setup"
+      description: "First device configuration with basic sync"
+      content: |
+        device:
+          id: "{{DEVICE_ID}}"
+          name: "{{DEVICE_NAME}}"
+          passphrase: "{{PASSPHRASE}}"
+          auto_start: true
+        
+        folders:
+          - path: "~/.openclaw/memory"
+            encrypted: true
+            priority: "high"
+          - path: "~/.openclaw/.learnings"
+            encrypted: true
+            priority: "high"
+        
+        sync:
+          mode: "real-time"
+          lan_discovery: true
+        
+        conflicts:
+          auto_resolve: true
+          learning_enabled: true
+
+    - name: "Multi-Device Family Setup"
+      description: "Multiple devices with family sharing"
+      content: |
+        device:
+          id: "family-primary"
+          name: "Family Primary Device"
+          passphrase: "{{FAMILY_PASSPHRASE}}"
+        
+        folders:
+          - path: "~/.openclaw/memory"
+            encrypted: true
+            priority: "high"
+          - path: "~/.openclaw/.learnings"
+            encrypted: true
+            priority: "high"
+          - path: "~/.openclaw/workspace"
+            encrypted: false
+            priority: "medium"
+        
+        devices:
+          - id: "family-laptop"
+            name: "Family Laptop"
+            trusted: true
+          - id: "family-desktop"
+            name: "Family Desktop"
+            trusted: true
+        
+        notifications:
+          telegram:
+            enabled: true
+            events: ["sync_complete", "conflict_detected"]
+
+    - name: "Developer Setup"
+      description: "Developer workstation with code sync"
+      content: |
+        device:
+          id: "dev-workstation"
+          name: "Developer Workstation"
+          passphrase: "{{DEV_PASSPHRASE}}"
+        
+        folders:
+          - path: "~/.openclaw/memory"
+            encrypted: true
+            priority: "high"
+          - path: "~/.openclaw/skills"
+            encrypted: true
+            priority: "medium"
+          - path: "~/.openclaw/workspace"
+            encrypted: false
+            priority: "high"
+        
+        performance:
+          file_watching:
+            enabled: true
+            debounce_ms: 200
+          network:
+            compression: true
+            delta_sync: true
+
+    - name: "High Security Setup"
+      description: "Maximum security configuration"
+      content: |
+        device:
+          id: "secure-device"
+          name: "Secure Device"
+          passphrase: "{{SECURE_PASSPHRASE}}"
+        
+        security:
+          encryption:
+            algorithm: "AES-256-GCM"
+            key_derivation: "scrypt"
+            iterations: 65536
+          network:
+            tls_version: "1.3"
+            device_approval: "manual"
+            rate_limit: 50
+        
+        conflicts:
+          auto_resolve: false
+          notification_required: true
+          backup_before_resolve: true
+
+# Hook registrations for OpenClaw integration
+hooks:
+  bootstrap:
+    - name: "Initialize sync directories"
+      command: "mkdir -p ~/.openclaw/{sync_encrypted,sync_mount,logs}"
+      description: "Create ClawSync directories"
+
+    - name: "Check dependencies"
+      command: "which syncthing && which gocryptfs || echo 'Missing dependencies'"
+      description: "Verify Syncthing and gocryptfs are installed"
+
+    - name: "Display status"
+      command: "echo '🦞 ClawSync ready - Encrypted bidirectional sync activated'"
+      description: "Show activation status"
+
+  post_tool_use:
+    - name: "Sync important files after tool use"
+      command: "cd ~/.openclaw/skills/claw-sync && python scripts/sync.py --folders memory,learnings --background"
+      description: "Auto-sync critical files after OpenClaw tool usage"
+
+    - name: "Check for conflicts after file changes"
+      command: "cd ~/.openclaw/skills/claw-sync && python scripts/sync.py check-conflicts --auto-resolve"
+      description: "Auto-resolve conflicts after file modifications"
+
+# Scheduled tasks
+schedules:
+  - name: "Real-time sync daemon"
+    cron: "* * * * *"  # Every minute (for daemon health check)
+    command: "cd ~/.openclaw/skills/claw-sync && python scripts/daemon_health.py"
+    description: "Monitor sync daemon health"
+
+  - name: "Conflict resolution learning"
+    cron: "0 */6 * * *"  # Every 6 hours
+    command: "cd ~/.openclaw/skills/claw-sync && python scripts/learn_conflicts.py --recent 216"
+    description: "Process recent conflicts for pattern learning"
+
+  - name: "Sync status report"
+    cron: "0 9 * * *"  # Daily at 9 AM
+    command: "cd ~/.openclaw/skills/claw-sync && python scripts/status_report.py --notify"
+    description: "Send daily sync status report"
+
+  - name: "Backup verification"
+    cron: "0 2 * * 0"  # Weekly on Sunday 2 AM
+    command: "cd ~/.openclaw/skills/claw-sync && python scripts/verify_backups.py --fix"
+    description: "Verify and fix backup integrity"
+
+  - name: "Log rotation"
+    cron: "0 3 * * 0"  # Weekly on Sunday 3 AM
+    command: "cd ~/.openclaw/skills/claw-sync && find logs/ -name '*.log' -mtime +30 -delete"
+    description: "Remove log files older than 30 days"
+
+# Environment variables
+environment:
+  - name: "CLAW_SYNC_CONFIG"
+    value: "~/.openclaw/skills/claw-sync/config.yaml"
+    description: "ClawSync configuration file"
+
+  - name: "CLAW_SYNC_DEVICE_ID"
+    value: "$(hostname)"
+    description: "Device identifier"
+
+  - name: "CLAW_SYNC_PASSPHRASE"
+    value: ""
+    description: "Encryption passphrase (set securely)"
+
+  - name: "CLAW_SYNC_MOUNT_POINT"
+    value: "~/.openclaw/sync_mount"
+    description: "Mount point for encrypted filesystem"
+
+  - name: "CLAW_SYNC_ENCRYPTED_DIR"
+    value: "~/.openclaw/sync_encrypted"
+    description: "Encrypted storage directory"
+
+# Dependencies
+dependencies:
+  python:
+    - "syncthing>=1.27.0"
+    - "cryptography>=41.0.0"
+    - "watchdog>=3.0.0"
+    - "pyyaml>=6.0.0"
+    - "click>=8.1.0"
+    - "rich>=13.0.0"
+    - "requests>=2.31.0"
+    - "aiohttp>=3.8.0"
+
+  system:
+    - name: "syncthing"
+      description: "P2P file synchronization"
+      install_url: "https://syncthing.net/downloads/"
+      check_command: "syncthing --version"
+
+    - name: "gocryptfs"
+      description: "Encrypted filesystem"
+      install_url: "https://github.com/rfjakob/gocryptfs/releases"
+      check_command: "gocryptfs --version"
+
+    - name: "fuse"
+      description: "Filesystem in Userspace (Linux)"
+      install_url: "https://github.com/libfuse/libfuse"
+      check_command: "fusermount --version"
+
+  optional:
+    - name: "docker"
+      description: "Container runtime for isolated sync"
+      check_command: "docker --version"
+
+# Testing commands
+testing:
+  commands:
+    - name: "Dependency check"
+      command: "cd ~/.openclaw/skills/claw-sync && python scripts/check_dependencies.py"
+      description: "Verify all dependencies are installed"
+
+    - name: "Encryption test"
+      command: "cd ~/.openclaw/skills/claw-sync && python scripts/test_encryption.py"
+      description: "Test gocryptfs encryption functionality"
+
+    - name: "Sync test"
+      command: "cd ~/.openclaw/skills/claw-sync && python scripts/test_sync.py --local"
+      description: "Test local synchronization logic"
+
+    - name: "Conflict resolution test"
+      command: "cd ~/.openclaw/skills/claw-sync && python scripts/test_conflicts.py"
+      description: "Test conflict detection and resolution"
+
+    - name: "Integration test"
+      command: "cd ~/.openclaw/skills/claw-sync && python scripts/test_integration.py"
+      description: "Test integration with ClawMemory/ClawSelfImprove"
+
+# File permissions
+permissions:
+  directories:
+    - path: "~/.openclaw/skills/claw-sync"
+      mode: "755"
+    - path: "~/.openclaw/sync_encrypted"
+      mode: "700"
+    - path: "~/.openclaw/sync_mount"
+      mode: "755"
+    - path: "~/.openclaw/skills/claw-sync/logs"
+      mode: "755"
+
+  files:
+    - path: "~/.openclaw/skills/claw-sync/config.yaml"
+      mode: "600"
+    - path: "~/.openclaw/skills/claw-sync/scripts/*.py"
+      mode: "755"
+    - path: "~/.openclaw/skills/claw-sync/hooks/*.sh"
+      mode: "755"
+
+# Health checks
+health_checks:
+  - name: "Sync daemon status"
+    command: "cd ~/.openclaw/skills/claw-sync && python scripts/daemon_status.py"
+    interval: "5m"
+    description: "Check if sync daemon is running"
+
+  - name: "Syncthing connectivity"
+    command: "curl -s http://localhost:8384/rest/system/status | jq -r '.connected'"
+    interval: "10m"
+    description: "Check Syncthing connectivity"
+
+  - name: "Encrypted filesystem mount"
+    command: "mount | grep gocryptfs"
+    interval: "15m"
+    description: "Verify encrypted filesystem is mounted"
+
+  - name: "Disk space check"
+    command: "df -h ~/.openclaw/sync_encrypted | tail -1 | awk '{print $5}' | sed 's/%//'"
+    interval: "30m"
+    description: "Monitor disk space usage"
+
+# Backup configuration
+backup:
+  paths:
+    - "~/.openclaw/skills/claw-sync/config.yaml"
+    - "~/.openclaw/skills/claw-sync/logs/"
+  exclude:
+    - "*.tmp"
+    - "temp/*"
+  schedule: "0 1 * * *"  # Daily at 1 AM
+  retention_days: 30
+
+# Update mechanism
+updates:
+  check_url: "https://api.github.com/repos/openkrab/claw-sync/releases/latest"
+  install_command: "cd ~/.openclaw/skills/claw-sync && git pull origin main && pip install -r requirements.txt"
+
+# Troubleshooting
+troubleshooting:
+  common_issues:
+    - name: "Syncthing not starting"
+      solution: "Check if port 8384 is available and firewall settings"
+      commands: ["sudo ufw allow 8384", "sudo ufw allow 22000"]
+
+    - name: "gocryptfs mount failed"
+      solution: "Check FUSE permissions and passphrase"
+      commands: ["sudo usermod -a -G fuse $USER", "sudo chmod 666 /dev/fuse"]
+
+    - name: "Device not connecting"
+      solution: "Check device IDs and network connectivity"
+      commands: ["python scripts/sync.py list-devices", "ping 192.168.1.100"]
+
+    - name: "Conflicts not resolving"
+      solution: "Check ClawSelfImprove integration and learning settings"
+      commands: ["python scripts/test_conflicts.py", "python scripts/learn_conflicts.py --reset"]
+
+  logs:
+    - "~/.openclaw/skills/claw-sync/logs/claw_sync.log"
+    - "~/.openclaw/skills/claw-sync/logs/conflicts.log"
+    - "~/.openclaw/skills/claw-sync/logs/syncthing.log"
+
+  debug_commands:
+    - "python scripts/sync.py --debug --verbose"
+    - "python scripts/test_encryption.py --verbose"
+    - "syncthing --home=~/.openclaw/skills/claw-sync/config --debug"
