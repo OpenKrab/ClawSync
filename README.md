@@ -1,4 +1,4 @@
-# ClawSync - OpenClaw Skill Specification
+# 🦞 ClawSync - OpenClaw Skill Specification
 
 ## Overview
 
